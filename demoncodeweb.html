@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>𓆩DemonCode𓆪</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --main-green: #00ff00; 
+            --bg-dark: #1e1e1e; 
+            --panel-dark: #252526; 
+            --text-gray: #d4d4d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Accessibility: Negative Mode */
+        body.negative-mode { filter: invert(1) hue-rotate(180deg); }
+        body.negative-mode iframe { filter: invert(0); } 
+
+        body { 
+            background-color: var(--bg-dark); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            transition: filter 0.3s; 
+        }
+
+        /* Header Area */
+        header { 
+            background-color: var(--bg-dark); 
+            padding: 10px 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            border-bottom: 2px solid var(--main-green); 
+            z-index: 1000;
+        }
+        .logo { 
+            font-family: 'Orbitron', sans-serif; 
+            color: var(--main-green); 
+            font-size: 14px; 
+            letter-spacing: 1px;
+        }
+        
+        .header-actions { display: flex; align-items: center; gap: 18px; position: relative; }
+        .icon-btn { color: var(--main-green); cursor: pointer; font-size: 22px; user-select: none; }
+
+        /* Search Input */
+        #search-input {
+            background: #2d2d2d; border: 1px solid #444; color: #fff;
+            padding: 5px 10px; border-radius: 4px; outline: none; font-size: 13px;
+            width: 0; transition: 0.4s; opacity: 0; position: absolute; right: 80px;
+        }
+        #search-input.active { width: 140px; opacity: 1; border-color: var(--main-green); }
+
+        /* Dropdown Menu */
+        .dropdown {
+            position: absolute; top: 45px; right: 0px; background: #333;
+            border: 1px solid #444; border-radius: 6px; 
+            z-index: 1100; min-width: 200px; box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            overflow: hidden; display: none; transform-origin: top;
+            animation: slideDown 0.3s ease-out forwards;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px) scaleY(0); }
+            to { opacity: 1; transform: translateY(0) scaleY(1); }
+        }
+        .dropdown.show { display: block; }
+        .menu-item { 
+            padding: 12px 15px; color: white; cursor: pointer; font-size: 13px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .menu-item:hover { background: #444; }
+        .menu-item:last-child { border-bottom: none; }
+
+        /* Checkbox */
+        .checkbox-container {
+            width: 18px; height: 18px; border: 2px solid var(--main-green);
+            border-radius: 3px; display: flex; align-items: center; justify-content: center;
+        }
+        .checkbox-container.checked::after {
+            content: '✔'; font-size: 12px; color: var(--main-green);
+        }
+
+        /* Tabs */
+        .tabs { display: flex; background-color: var(--panel-dark); }
+        .tab-btn {
+            flex: 1; padding: 12px; border: none; background: none;
+            color: #888; text-transform: uppercase; font-weight: bold;
+            cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s;
+        }
+        .tab-btn.active { color: var(--main-green); border-bottom: 3px solid var(--main-green); }
+
+        /* Editors */
+        .content-area { flex: 1; position: relative; }
+        .tab-content { display: none; width: 100%; height: 100%; }
+        .tab-content.active { display: block; }
+        textarea {
+            width: 100%; height: 100%; background: var(--bg-dark); color: var(--text-gray);
+            padding: 15px; border: none; outline: none; font-family: 'Consolas', monospace; resize: none;
+        }
+
+        /* Search Results Overlay */
+        #search-results {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30,30,30,0.95); z-index: 10; display: none;
+            padding: 20px; overflow-y: auto; color: var(--main-green);
+        }
+        .result-line { padding: 5px; border-bottom: 1px solid #333; font-size: 13px; color: #aaa; }
+        .result-line b { color: var(--main-green); }
+        .not-found { color: #ff4444; text-align: center; margin-top: 50px; font-family: 'Orbitron'; }
+
+        /* Modal Details */
+        #details-modal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #2d2d2d; padding: 25px; border: 1px solid var(--main-green);
+            color: white; z-index: 2000; display: none; border-radius: 8px; width: 85%;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        .modal-header { font-family: 'Orbitron'; color: var(--main-green); margin-bottom: 15px; text-align: center; }
+        .stat-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; border-bottom: 1px solid #444; padding-bottom: 4px; }
+
+        /* Footer */
+        .quick-keys { display: flex; background: #2d2d2d; padding: 10px; gap: 8px; justify-content: center; overflow-x: auto; border-top: 1px solid #333; }
+        .key-btn { background: #3e3e3e; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        footer { background: var(--panel-dark); padding: 12px 20px; display: flex; justify-content: flex-end; }
+        .run-btn { background: var(--main-green); color: black; border: none; padding: 10px 25px; border-radius: 4px; font-weight: bold; font-family: 'Orbitron'; cursor: pointer; }
+        
+        iframe { width: 100%; height: 100%; background: white; border: none; }
+    </style>
+</head>
+<body onload="loadSavedCode()">
+
+<header>
+    <div class="logo">𓆩DemonCode𓆪</div>
+    <div class="header-actions">
+        <input type="text" id="search-input" placeholder="Search code..." oninput="doSearch()">
+        <span class="icon-btn" onclick="toggleMenu(event)">⋮</span>
+        <span class="icon-btn" onclick="toggleSearch()">🔍</span>
+        
+        <div id="main-menu" class="dropdown">
+            <div class="menu-item" onclick="toggleNegative()">
+                Negative Mode 
+                <div id="neg-checkbox" class="checkbox-container checked"></div>
+            </div>
+            <div class="menu-item" onclick="showDetails()">Project Details</div>
+        </div>
+    </div>
+</header>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="uiTab('html-tab', this)">HTML</button>
+    <button class="tab-btn" onclick="uiTab('css-tab', this)">CSS</button>
+    <button class="tab-btn" onclick="uiTab('js-tab', this)">JS</button>
+    <button class="tab-btn" onclick="uiTab('output-tab', this)">OUTPUT</button>
+</div>
+
+<div class="content-area">
+    <div id="search-results"></div>
+
+    <div id="details-modal">
+        <div class="modal-header">PROJECT DETAILS</div>
+        <div id="stats-content"></div>
+        <button onclick="closeModal()" style="margin-top:20px; width:100%; padding:10px; background:var(--main-green); border:none; cursor:pointer; font-weight:bold;">CLOSE</button>
+    </div>
+
+    <div id="html-tab" class="tab-content active"><textarea id="html-code" oninput="saveCode()" spellcheck="false"></textarea></div>
+    <div id="css-tab" class="tab-content"><textarea id="css-code" oninput="saveCode()" spellcheck="false"></textarea></div>
+    <div id="js-tab" class="tab-content"><textarea id="js-code" oninput="saveCode()" spellcheck="false"></textarea></div>
+    <div id="output-tab" class="tab-content"><iframe id="output-frame"></iframe></div>
+</div>
+
+<div id="editor-controls">
+    <div class="quick-keys">
+        <button class="key-btn" onclick="insertSymbol('<')">&lt;</button>
+        <button class="key-btn" onclick="insertSymbol('>')">&gt;</button>
+        <button class="key-btn" onclick="insertSymbol('/')">/</button>
+        <button class="key-btn" onclick="insertSymbol('=')">=</button>
+        <button class="key-btn" onclick="insertSymbol('{')">{</button>
+        <button class="key-btn" onclick="insertSymbol('}')">}</button>
+    </div>
+    <footer><button class="run-btn" onclick="runCode()">RUN PROJECT ▶</button></footer>
+</div>
+
+<script>
+    const htmlIn = document.getElementById("html-code");
+    const cssIn = document.getElementById("css-code");
+    const jsIn = document.getElementById("js-code");
+
+    const defaultHTML = `<!DOCTYPE html>\n<html>\n<head>\n    <title>My Project</title>\n</head>\n<body>\n    <h1>Welcome To 𓆩DemonCode𓆪</h1>\n    <p>This project⚙️✨ is a combination of all of us working together, and thank you all for supporting us❤️‍🔥</p>\n</body>\n</html>`;
+    const defaultCSS = `body {\n    text-align: center;\n    padding-top: 50px;\n}`;
+
+    function saveCode() {
+        try {
+            localStorage.setItem('main_html', htmlIn.value);
+            localStorage.setItem('main_css', cssIn.value);
+            localStorage.setItem('main_js', jsIn.value);
+        } catch (e) { console.warn("Auto-save disabled."); }
+    }
+
+    function loadSavedCode() {
+        try {
+            const h = localStorage.getItem('main_html');
+            const c = localStorage.getItem('main_css');
+            const j = localStorage.getItem('main_js');
+            htmlIn.value = (h !== null) ? h : defaultHTML;
+            cssIn.value = (c !== null) ? c : defaultCSS;
+            jsIn.value = (j !== null) ? j : "";
+        } catch (e) {
+            htmlIn.value = defaultHTML;
+            cssIn.value = defaultCSS;
+            jsIn.value = "";
+        }
+    }
+
+    function toggleSearch() {
+        const inp = document.getElementById('search-input');
+        const res = document.getElementById('search-results');
+        inp.classList.toggle('active');
+        if (inp.classList.contains('active')) inp.focus();
+        else { inp.value = ""; res.style.display = 'none'; }
+    }
+
+    function doSearch() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const resDiv = document.getElementById('search-results');
+        if (!query) { resDiv.style.display = 'none'; return; }
+        resDiv.style.display = 'block';
+        resDiv.innerHTML = "";
+        let found = false;
+        const sections = [{n:'HTML', c:htmlIn.value}, {n:'CSS', c:cssIn.value}, {n:'JS', c:jsIn.value}];
+        sections.forEach(s => {
+            s.c.split('\n').forEach((line, i) => {
+                if (line.toLowerCase().includes(query)) {
+                    found = true;
+                    const div = document.createElement('div');
+                    div.className = 'result-line';
+                    div.innerHTML = `[${s.n} Line ${i+1}]: ` + line.replace(new RegExp(query, 'gi'), m => `<b>${m}</b>`);
+                    resDiv.appendChild(div);
+                }
+            });
+        });
+        if (!found) resDiv.innerHTML = '<div class="not-found">NOT FOUND</div>';
+    }
+
+    function toggleMenu(e) {
+        e.stopPropagation();
+        document.getElementById('main-menu').classList.toggle('show');
+    }
+
+    function toggleNegative() {
+        const body = document.body;
+        const box = document.getElementById('neg-checkbox');
+        body.classList.toggle('negative-mode');
+        box.classList.toggle('checked', !body.classList.contains('negative-mode'));
+    }
+
+    function showDetails() {
+        const full = htmlIn.value + cssIn.value + jsIn.value;
+        const stats = {
+            lines: (full.split('\n').length),
+            chars: full.length,
+            letters: (full.match(/[a-z]/gi) || []).length,
+            numbers: (full.match(/[0-9]/g) || []).length
+        };
+        document.getElementById('stats-content').innerHTML = `
+            <div class="stat-row"><span>Project Title:</span> <span>𓆩DemonCode𓆪</span></div>
+            <div class="stat-row"><span>Line Count:</span> <span>${stats.lines}</span></div>
+            <div class="stat-row"><span>Character Count:</span> <span>${stats.chars}</span></div>
+            <div class="stat-row"><span>Letter Count:</span> <span>${stats.letters}</span></div>
+            <div class="stat-row"><span>Number Count:</span> <span>${stats.numbers}</span></div>
+        `;
+        document.getElementById('details-modal').style.display = 'block';
+    }
+
+    function closeModal() { document.getElementById('details-modal').style.display = 'none'; }
+
+    function uiTab(name, btn) {
+        document.getElementById('search-results').style.display = 'none';
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.getElementById(name).classList.add("active");
+        btn.classList.add("active");
+        document.getElementById('editor-controls').style.display = (name === 'output-tab') ? 'none' : 'block';
+    }
+
+    function runCode() {
+        const frame = document.getElementById("output-frame").contentWindow.document;
+        frame.open();
+        frame.write(htmlIn.value + "<style>" + cssIn.value + "</style><script>" + jsIn.value + "<\/script>");
+        frame.close();
+        uiTab('output-tab', document.querySelectorAll('.tab-btn')[3]);
+    }
+
+    function insertSymbol(s) {
+        const area = document.querySelector('.tab-content.active textarea');
+        if(!area) return;
+        const start = area.selectionStart;
+        area.value = area.value.substring(0, start) + s + area.value.substring(area.selectionEnd);
+        area.focus();
+        area.selectionStart = area.selectionEnd = start + 1;
+        saveCode();
+    }
+
+    window.onclick = (e) => {
+        if (!e.target.matches('.icon-btn')) document.getElementById('main-menu').classList.remove('show');
+    };
+</script>
+</body>
+</html>
